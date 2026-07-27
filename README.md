@@ -273,6 +273,12 @@ The app runs by default at **http://localhost:3000**.
 - Virtual backgrounds and background blur.
 - Collaborative whiteboard.
 - Enhanced authentication (Email verification, Forgot Password, 2FA).
+- 📊 Interactive Dashboard
+    - Meeting history and attendance
+    - Total meetings hosted/joined
+    - Meeting duration statistics
+    - Frequently contacted participants
+    - Weekly/Monthly activity insights
 
 ---
 
