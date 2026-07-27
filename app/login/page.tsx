@@ -15,6 +15,12 @@ const errorMessages: Record<string, string> = {
     Default: "Something went wrong while signing in. Please try again.",
 }
 
+// Message returned by authorize() (see lib/auth.ts) when a signup is
+// rejected because the email is already registered. Used to detect that
+// specific case so the UI can auto-switch back to the Login form.
+const EMAIL_ALREADY_EXISTS_MESSAGE =
+    "An account with this email already exists. Please log in."
+
 type AuthMode = "login" | "signup"
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -37,9 +43,10 @@ function LoginContent() {
     const oauthError = searchParams.get("error")
 
     // "login" shows Email + Password. "signup" shows Username + Email + Password.
-    // This is purely a presentational toggle — both modes submit through the
-    // exact same CredentialsProvider/authorize() flow already in lib/auth.ts,
-    // which decides whether to log in an existing user or create a new one.
+    // Both modes submit through CredentialsProvider/authorize() in
+    // lib/auth.ts, but the mode is sent along with the credentials so
+    // authorize() runs a strictly separate flow for each: login never
+    // creates an account, and signup never logs an existing one in.
     const [mode, setMode] = useState<AuthMode>("login")
     const [slideDirection, setSlideDirection] = useState<"forward" | "back">("forward")
 
@@ -77,9 +84,13 @@ function LoginContent() {
         setIsCredentialsLoading(true)
         try {
             const res = await signIn("credentials", {
-                // In "login" mode we don't collect a username — the existing
-                // authorize() logic only uses it when creating a brand new
-                // account, so omitting it here doesn't change any behavior.
+                // Tells authorize() (lib/auth.ts) which strict flow to run:
+                // "login" only authenticates existing users, "signup" only
+                // creates new ones.
+                mode,
+                // In "login" mode we don't collect a username — authorize()
+                // only uses it when creating a brand new account, so
+                // omitting it here doesn't change any behavior.
                 username: mode === "signup" ? username : "",
                 email,
                 password,
@@ -88,7 +99,26 @@ function LoginContent() {
             })
 
             if (res?.error) {
-                setFormError(errorMessages.CredentialsSignin)
+                // authorize() returns a specific, human-readable message for
+                // every rejection case (email not registered, incorrect
+                // password, email already registered, etc.) which NextAuth
+                // passes straight through here. Fall back to a generic
+                // message only for NextAuth's own internal error codes.
+                const message =
+                    res.error === "CredentialsSignin"
+                        ? errorMessages.CredentialsSignin
+                        : res.error
+
+                setFormError(message)
+
+                // Signup rejected because the account already exists:
+                // automatically switch back to the Login form so the user
+                // can sign in instead, per the required flow.
+                if (mode === "signup" && res.error === EMAIL_ALREADY_EXISTS_MESSAGE) {
+                    setSlideDirection("back")
+                    setMode("login")
+                }
+
                 return
             }
 
