@@ -32,17 +32,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <Providers>
-        <StreamClientProvider>
-
-          <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased `}
-          >
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+      >
+        <Providers>
+          <StreamClientProvider>
             {children}
-            <Toaster />
-          </body>
-        </StreamClientProvider>
-      </Providers>
+          </StreamClientProvider>
+        </Providers>
+        <Toaster />
+      </body>
     </html>
   );
 }

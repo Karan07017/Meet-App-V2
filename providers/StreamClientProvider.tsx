@@ -6,21 +6,26 @@ import {
     StreamVideo,
     StreamVideoClient
 } from "@stream-io/video-react-sdk";
-import { getServerSession } from "next-auth";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useState } from "react";
 
 const apiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY as string;
 
 export const StreamClientProvider = ({ children }: { children: ReactNode }) => {
     const [videoClient, setVideoClient] = useState<StreamVideoClient>();
+    const router = useRouter();
 
     const { data: session, status } = useSession()
-    console.log(session,status);
     useEffect(() => {
+        // proxy.ts already redirects unauthenticated requests before this
+        // component ever mounts. This is a defense-in-depth fallback for a
+        // session expiring mid-visit (e.g. a long-lived tab). `router.push`
+        // is used instead of the `redirect()` helper — that helper is meant
+        // for Server Components/Server Actions and throws when called from
+        // a client event handler or effect.
         if (status === "unauthenticated") {
-            redirect("/api/auth/signin");
+            router.push("/api/auth/signin");
         }
         if (status != "authenticated" || !session) return;
         const client = new StreamVideoClient({
@@ -32,14 +37,11 @@ export const StreamClientProvider = ({ children }: { children: ReactNode }) => {
             },
             tokenProvider: tokenProvider
         });
-        console.log(client)
         setVideoClient(client);
-    }, [session, status])
+    }, [session, status, router])
 
     if (!videoClient) {
-        return <body>
-            <Loader/>
-        </body>
+        return <Loader/>;
     }
 
     return (

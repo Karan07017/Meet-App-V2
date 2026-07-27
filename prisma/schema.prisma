@@ -13,9 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id Int @id @default(autoincrement())
-  name String 
-  email String @unique
-  password String 
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  name        String
+  email       String       @unique
+  password    String?
+  provider    AuthProvider @default(CREDENTIALS)
+  lastLoginAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
