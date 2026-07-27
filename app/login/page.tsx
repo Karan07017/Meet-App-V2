@@ -15,6 +15,8 @@ const errorMessages: Record<string, string> = {
     Default: "Something went wrong while signing in. Please try again.",
 }
 
+type AuthMode = "login" | "signup"
+
 function GoogleIcon({ className }: { className?: string }) {
     return (
         <svg className={className} viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
@@ -34,6 +36,13 @@ function LoginContent() {
     const callbackUrl = searchParams.get("callbackUrl") || "/"
     const oauthError = searchParams.get("error")
 
+    // "login" shows Email + Password. "signup" shows Username + Email + Password.
+    // This is purely a presentational toggle — both modes submit through the
+    // exact same CredentialsProvider/authorize() flow already in lib/auth.ts,
+    // which decides whether to log in an existing user or create a new one.
+    const [mode, setMode] = useState<AuthMode>("login")
+    const [slideDirection, setSlideDirection] = useState<"forward" | "back">("forward")
+
     const [username, setUsername] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -44,6 +53,13 @@ function LoginContent() {
 
     const displayError =
         formError ?? (oauthError ? errorMessages[oauthError] ?? errorMessages.Default : null)
+
+    function switchMode(nextMode: AuthMode) {
+        if (nextMode === mode) return
+        setSlideDirection(nextMode === "signup" ? "forward" : "back")
+        setMode(nextMode)
+        setFormError(null)
+    }
 
     async function handleGoogleSignIn() {
         setIsGoogleLoading(true)
@@ -61,7 +77,10 @@ function LoginContent() {
         setIsCredentialsLoading(true)
         try {
             const res = await signIn("credentials", {
-                username,
+                // In "login" mode we don't collect a username — the existing
+                // authorize() logic only uses it when creating a brand new
+                // account, so omitting it here doesn't change any behavior.
+                username: mode === "signup" ? username : "",
                 email,
                 password,
                 redirect: false,
@@ -80,6 +99,9 @@ function LoginContent() {
             setIsCredentialsLoading(false)
         }
     }
+
+    const slideAnimationClass =
+        slideDirection === "forward" ? "animate-auth-slide-forward" : "animate-auth-slide-back"
 
     return (
         <div className="app-gradient-bg min-h-screen w-full flex overflow-hidden">
@@ -113,10 +135,17 @@ function LoginContent() {
                         <div className="text-4xl font-extrabold gradient-text tracking-tight">MEET</div>
                     </div>
 
-                    <div className="rounded-3xl glass-panel shadow-2xl shadow-black/40 px-6 sm:px-8 py-9">
-                        <div className="mb-7 text-center">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Welcome to MEET</h2>
-                            <p className="text-sm text-zinc-400 mt-1.5">Sign in to start or join a meeting</p>
+                    <div className="rounded-3xl glass-panel shadow-2xl shadow-black/40 px-6 sm:px-8 py-9 overflow-hidden">
+                        {/* Header text swaps with the mode, same card */}
+                        <div key={`header-${mode}`} className={`mb-7 text-center ${slideAnimationClass}`}>
+                            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                                {mode === "login" ? "Welcome back" : "Create your account"}
+                            </h2>
+                            <p className="text-sm text-zinc-400 mt-1.5">
+                                {mode === "login"
+                                    ? "Sign in to start or join a meeting"
+                                    : "Sign up to start or join a meeting"}
+                            </p>
                         </div>
 
                         {displayError && (
@@ -125,6 +154,7 @@ function LoginContent() {
                             </div>
                         )}
 
+                        {/* Google Sign In stays at the top, unchanged */}
                         <Button
                             type="button"
                             onClick={handleGoogleSignIn}
@@ -141,16 +171,24 @@ function LoginContent() {
                             <div className="h-px flex-1 bg-white/10" />
                         </div>
 
-                        <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-                            <div className="relative">
-                                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                                <Input
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    placeholder="Username"
-                                    className="pl-10 h-12 bg-white/5 border-white/15 text-white placeholder:text-zinc-500 rounded-xl focus-visible:ring-indigo-500"
-                                />
-                            </div>
+                        {/* Credential form — same card, content swaps between Login / Signup */}
+                        <form
+                            key={`form-${mode}`}
+                            onSubmit={handleCredentialsSubmit}
+                            className={`space-y-4 ${slideAnimationClass}`}
+                        >
+                            {mode === "signup" && (
+                                <div className="relative">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                                    <Input
+                                        required
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        placeholder="Username"
+                                        className="pl-10 h-12 bg-white/5 border-white/15 text-white placeholder:text-zinc-500 rounded-xl focus-visible:ring-indigo-500"
+                                    />
+                                </div>
+                            )}
 
                             <div className="relative">
                                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
@@ -189,13 +227,24 @@ function LoginContent() {
                                 disabled={isCredentialsLoading}
                                 className="w-full h-12 rounded-xl flex items-center justify-center gap-2 bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 text-white font-medium shadow-lg shadow-indigo-950/50 hover:shadow-xl hover:shadow-indigo-900/50 hover:scale-[1.01] active:scale-[0.99] transition-all duration-300"
                             >
-                                {isCredentialsLoading ? "Please wait..." : "Continue"}
+                                {isCredentialsLoading
+                                    ? "Please wait..."
+                                    : mode === "login"
+                                        ? "Log in"
+                                        : "Create account"}
                                 {!isCredentialsLoading && <ArrowRight size={18} />}
                             </Button>
                         </form>
 
-                        <p className="text-xs text-zinc-500 text-center mt-6">
-                            New here? Just fill in the form above — your account is created automatically.
+                        <p className="text-sm text-zinc-400 text-center mt-6">
+                            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+                            <button
+                                type="button"
+                                onClick={() => switchMode(mode === "login" ? "signup" : "login")}
+                                className="text-white font-medium hover:text-indigo-400 transition-colors"
+                            >
+                                {mode === "login" ? "Sign Up" : "Log In"}
+                            </button>
                         </p>
                     </div>
                 </div>

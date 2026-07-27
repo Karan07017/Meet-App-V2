@@ -66,6 +66,39 @@ body {
   }
 }
 
+/* ---- Login/Signup card mode-switch transition ---- */
+@layer utilities {
+  .animate-auth-slide-forward {
+    animation: auth-slide-forward 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-auth-slide-back {
+    animation: auth-slide-back 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes auth-slide-forward {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes auth-slide-back {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* subtle custom scrollbar for a more polished feel */
 ::-webkit-scrollbar {
   width: 10px;
