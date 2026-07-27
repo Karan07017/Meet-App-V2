@@ -251,11 +251,12 @@ The app runs by default at **http://localhost:3000**.
 
 ---
 
-## 🐞 Current Issues / Limitations
+## 🐞 Current Limitations
 
-| Issue | Details | |---|---| | 🔴 **Record button doesn't produce a usable recording** | The call toolbar exposes Stream's built-in **Record** control, but the project has no recording storage/egress configured (no webhook, no S3/GCS setup) and no in-app UI to view or download a recording afterward — so recording can't actually be retrieved end-to-end. |
+- 🔴 **Meeting Recording** – Recording functionality is not yet implemented. The recording control is included as a placeholder for a future release and currently does not save or provide access to meeting recordings.
 
-> **Note:** The recording button is currently included as a placeholder for a future recording feature and does not provide recording functionality in the current release.
+> **Note:** Full recording support (cloud storage, playback, and download) is planned for a future update.
+
 ---
 
 ## 🚀 Future Enhancements
