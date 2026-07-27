@@ -25,7 +25,7 @@ export const StreamClientProvider = ({ children }: { children: ReactNode }) => {
         // for Server Components/Server Actions and throws when called from
         // a client event handler or effect.
         if (status === "unauthenticated") {
-            router.push("/api/auth/signin");
+            return;
         }
         if (status != "authenticated" || !session) return;
         const client = new StreamVideoClient({
@@ -40,8 +40,20 @@ export const StreamClientProvider = ({ children }: { children: ReactNode }) => {
         setVideoClient(client);
     }, [session, status, router])
 
+    // Still resolving the session — show the loader.
+    if (status === "loading") {
+        return <Loader />;
+    }
+
+    // No session (e.g. on /login): don't block rendering, and don't try
+    // to spin up a video client — there's nothing to authenticate yet.
+    if (status === "unauthenticated" || !session) {
+        return <>{children}</>;
+    }
+
+    // Authenticated but the video client hasn't been created yet.
     if (!videoClient) {
-        return <Loader/>;
+        return <Loader />;
     }
 
     return (
