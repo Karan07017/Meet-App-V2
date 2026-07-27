@@ -14,6 +14,12 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "jwt",
     },
+    // Presentation-only: route NextAuth's sign-in flow to our own styled
+    // page instead of the built-in default page. Providers, callbacks, and
+    // the credentials `authorize` logic below are all unchanged.
+    pages: {
+        signIn: "/login",
+    },
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID as string,
