@@ -64,10 +64,14 @@ const MeetingPage = ({ meetingId }: { meetingId: string }) => {
   }
   return (
     <div className='h-screen w-full '>
-      <div className='absolute z-10 flex justify-center gap-3 w-full pt-3'>
+      <div className='absolute z-10 flex justify-center gap-3 w-full pt-3 pointer-events-none'>
 
-        <AlertDialogDemo copy="Meeting ID"/>
-        <AlertDialogDemo copy="Meeting Link"/>
+        <div className='pointer-events-auto'>
+          <AlertDialogDemo copy="Meeting ID"/>
+        </div>
+        <div className='pointer-events-auto'>
+          <AlertDialogDemo copy="Meeting Link"/>
+        </div>
       </div>
 
       <StreamCall call={call}>
