@@ -7,10 +7,11 @@ import {
   CallingState,
   PaginatedGridLayout,
   SpeakerLayout,
+  useCall,
   useCallStateHooks,
 } from '@stream-io/video-react-sdk';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Users, LayoutList } from 'lucide-react';
+import { Users, LayoutList, MessageSquare } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ import {
 import Loader from './Loader';
 import { cn } from '@/lib/utils';
 import EndCallButton from './EndCallButton';
+import MeetingChatPanel from './MeetingChatPanel';
 
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
@@ -31,11 +33,28 @@ const MeetingRoom = () => {
   const router = useRouter();
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const { useCallCallingState } = useCallStateHooks();
+  const call = useCall();
 
   const callingState = useCallCallingState();
 
   if (callingState !== CallingState.JOINED) return <Loader />;
+
+  // Reuse the call id (the SDK's meeting id) as the chat channel key so
+  // every participant of this meeting lands in the same
+  // `meeting_<meetingId>` Stream Chat channel — no extra id needed.
+  const meetingId = call?.id;
+
+  const toggleChat = () => {
+    setShowChat((prev) => !prev);
+    setShowParticipants(false);
+  };
+
+  const toggleParticipants = () => {
+    setShowParticipants((prev) => !prev);
+    setShowChat(false);
+  };
 
   const CallLayout = () => {
     switch (layout) {
@@ -62,6 +81,12 @@ const MeetingRoom = () => {
           <CallParticipantsList onClose={() => setShowParticipants(false)} />
         </div>
         }
+        {showChat && meetingId && (
+          <MeetingChatPanel
+            meetingId={meetingId}
+            onClose={() => setShowChat(false)}
+          />
+        )}
       </div>
 
       <div className="fixed bottom-0 flex w-full items-center justify-center gap-5 flex-wrap pb-4">
@@ -91,7 +116,17 @@ const MeetingRoom = () => {
           </DropdownMenuContent>
         </DropdownMenu>
         <CallStatsButton />
-        <button onClick={() => setShowParticipants((prev) => !prev)}>
+        <button onClick={toggleChat}>
+          <div
+            className={cn(
+              'cursor-pointer rounded-2xl bg-white/5 border border-white/10 px-4 py-2 hover:bg-white/15 transition-colors duration-200',
+              { 'bg-white/15': showChat },
+            )}
+          >
+            <MessageSquare size={20} className="text-white" />
+          </div>
+        </button>
+        <button onClick={toggleParticipants}>
           <div className="cursor-pointer rounded-2xl bg-white/5 border border-white/10 px-4 py-2 hover:bg-white/15 transition-colors duration-200">
             <Users size={20} className="text-white" />
           </div>
