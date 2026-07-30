@@ -4,18 +4,17 @@ import { useEffect, useState } from "react";
 import type { Channel, StreamChat } from "stream-chat";
 
 /**
- * Every meeting gets its own Stream Chat channel: `meeting_<meetingId>`.
- * All participants who join the same meeting call `channel.watch()` on the
- * same channel id, so they land in the same real-time conversation.
+ * Every meeting gets exactly one Stream Chat channel: `meeting_<meetingId>`.
+ * All participants of the same meeting call `channel.watch()` on the same
+ * channel id, so they land in the same real-time conversation.
  *
  * Uses Stream's built-in "messaging" channel type — no custom channel type
  * needs to be configured on the Stream dashboard.
  *
- * `channel.watch()` creates the channel on first use and simply
- * (re)joins + re-syncs it on every later call. That single call is what
- * satisfies "messages persist across refresh / rejoin": watch() hydrates
- * `channel.state.messages` with prior history, no separate persistence
- * logic needed.
+ * This hook only creates and watches the channel. Rendering messages,
+ * sending them, keeping the list in sync, and auto-scrolling is entirely
+ * handled by the official `stream-chat-react` components (`Channel`,
+ * `MessageList`, `MessageComposer`) once they're handed this channel.
  */
 export function useMeetingChatChannel(
     chatClient: StreamChat | undefined,
@@ -32,11 +31,6 @@ export function useMeetingChatChannel(
         setIsLoading(true);
         setError(null);
 
-        // const meetingChannel = chatClient.channel(
-        //     "messaging",
-        //     `meeting_${meetingId}`,
-        //     { name: `Meeting ${meetingId}` },
-        // );
         const meetingChannel = chatClient.channel(
             "messaging",
             `meeting_${meetingId}`,

@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useStreamChatClient } from "@/hooks/useStreamChatClient";
 import { useMeetingChatChannel } from "@/hooks/useMeetingChatChannel";
-import MeetingChat from "./MeetingChat";
+import MeetingChatWindow from "./MeetingChatWindow";
 
 interface MeetingChatPanelProps {
     meetingId: string;
@@ -16,6 +16,10 @@ interface MeetingChatPanelProps {
  * what satisfies "chat is only available while inside a meeting" — there's
  * no chat client wired into the root layout the way `StreamClientProvider`
  * wires up the video client.
+ *
+ * Once the client and channel are ready, all actual chat UI (message list,
+ * input, syncing, auto-scroll) is delegated to `MeetingChatWindow`, which is
+ * built exclusively from official `stream-chat-react` components.
  */
 const MeetingChatPanel = ({ meetingId, onClose }: MeetingChatPanelProps) => {
     const { data: session } = useSession();
@@ -35,7 +39,7 @@ const MeetingChatPanel = ({ meetingId, onClose }: MeetingChatPanelProps) => {
         );
     }
 
-    if (isLoading || !channel || !currentUserId) {
+    if (isLoading || !channel || !chatClient || !currentUserId) {
         return (
             <div className="ml-2 flex h-[calc(100vh-86px)] w-[320px] shrink-0 items-center justify-center rounded-2xl glass-pill shadow-lg shadow-black/30">
                 <div
@@ -50,9 +54,9 @@ const MeetingChatPanel = ({ meetingId, onClose }: MeetingChatPanelProps) => {
 
     return (
         <div className="ml-2">
-            <MeetingChat
+            <MeetingChatWindow
+                chatClient={chatClient}
                 channel={channel}
-                currentUserId={currentUserId}
                 onClose={onClose}
             />
         </div>
