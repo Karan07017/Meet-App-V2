@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Channel, StreamChat } from "stream-chat";
+import { ensureMeetingChatAccess } from "@/actions/stream.actions";
 
 /**
  * Every meeting gets exactly one Stream Chat channel: `meeting_<meetingId>`.
@@ -11,10 +12,23 @@ import type { Channel, StreamChat } from "stream-chat";
  * Uses Stream's built-in "messaging" channel type — no custom channel type
  * needs to be configured on the Stream dashboard.
  *
- * This hook only creates and watches the channel. Rendering messages,
- * sending them, keeping the list in sync, and auto-scrolling is entirely
- * handled by the official `stream-chat-react` components (`Channel`,
- * `MessageList`, `MessageComposer`) once they're handed this channel.
+ * Stream's "messaging" channel type only lets *members* read/watch a
+ * channel. `channel.watch()` only auto-adds the calling user as a member
+ * when it's the one implicitly creating the channel — i.e. the first
+ * person to open chat in a given meeting (usually the host). Every
+ * participant who joins afterwards is watching a channel that already
+ * exists, so the client SDK does NOT add them as a member, and Stream
+ * rejects their read with a 403 (error code 17, "ReadChannel"). A
+ * regular user-role token can't add itself as a member of an existing
+ * channel, so `ensureMeetingChatAccess` (actions/stream.actions.ts) runs
+ * server-side with admin credentials to guarantee membership before this
+ * hook watches the channel client-side.
+ *
+ * This hook only ensures access, creates, and watches the channel.
+ * Rendering messages, sending them, keeping the list in sync, and
+ * auto-scrolling is entirely handled by the official `stream-chat-react`
+ * components (`Channel`, `MessageList`, `MessageComposer`) once they're
+ * handed this channel.
  */
 export function useMeetingChatChannel(
     chatClient: StreamChat | undefined,
@@ -31,17 +45,20 @@ export function useMeetingChatChannel(
         setIsLoading(true);
         setError(null);
 
-        const meetingChannel = chatClient.channel(
-            "messaging",
-            `meeting_${meetingId}`,
-        );
-
-        meetingChannel
-            .watch()
+        ensureMeetingChatAccess(meetingId)
             .then(() => {
                 if (cancelled) return;
-                setChannel(meetingChannel);
-                setIsLoading(false);
+
+                const meetingChannel = chatClient.channel(
+                    "messaging",
+                    `meeting_${meetingId}`,
+                );
+
+                return meetingChannel.watch().then(() => {
+                    if (cancelled) return;
+                    setChannel(meetingChannel);
+                    setIsLoading(false);
+                });
             })
             .catch((err) => {
                 console.error("Failed to watch meeting chat channel:", err);
