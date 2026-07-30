@@ -189,26 +189,3 @@ body {
   min-width: 0;
   max-width: 100%;
 }
-
-/* ---- Stream Chat React (official SDK) theming ----
-   Scopes dark-theme variable overrides to match the app's glass/dark
-   meeting UI. Base stylesheet is imported once in MeetingChatWindow.tsx
-   (import "stream-chat-react/dist/css/index.css"). */
-.str-chat__theme-dark {
-  --accent-primary: #6366f1;
-  --chat-bg-outgoing: #4f46e5;
-  --chat-bg-incoming: rgba(255, 255, 255, 0.08);
-  --chat-text-outgoing: #ffffff;
-  --chat-text-incoming: rgba(255, 255, 255, 0.9);
-  --text-link: #a5b4fc;
-  --chat-text-link: #a5b4fc;
-  --background-core-elevation-1: transparent;
-  --background-core-app: transparent;
-  --border-utility-focused: #818cf8;
-  --radius-max: 16px;
-  --button-radius-full: 12px;
-}
-
-.str-chat {
-  height: 100%;
-}
