@@ -251,20 +251,6 @@ The app runs by default at **http://localhost:3000**.
 
 ---
 
-## 🐞 Current Limitations
-
-- 🔴 **Meeting Recording** – Recording functionality is not yet implemented. The recording control is included as a placeholder for a future release and currently does not save or provide access to meeting recordings.
-
-> **Note:** Full recording support (cloud storage, playback, and download) is planned for a future update.
-
----
-
-## 🚀 Future Enhancements
-
-- Meeting scheduling & calendar invites
-- Waiting room / host approval before join
-- Automated test suite (unit/integration)
-- Meeting recording with cloud storage and playback.
 - Login/signup rate limiting.
 - AI meeting summaries and action items.
 - In-meeting chat and file sharing.

@@ -15,7 +15,12 @@ export const tokenProvider = async ()=>{
     const user = session.user;
     const client = new StreamClient(apiKey, apiSecret);
     const vailidity = 60 * 60;
-    const token = client.generateUserToken({user_id: user.id, validity_in_seconds: vailidity});
+    const now = Math.floor(Date.now() / 1000);
+    const token = client.generateUserToken({
+        user_id: user.id,
+        validity_in_seconds: vailidity,
+        issued_at: now - 60,
+    });
 
     return token;
 }
