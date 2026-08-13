@@ -14,7 +14,7 @@ import {
   useCallStateHooks,
 } from '@stream-io/video-react-sdk';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Users, LayoutList, MessageSquare } from 'lucide-react';
+import { Users, LayoutList, MessageSquare, Sparkles } from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -27,6 +27,8 @@ import Loader from './Loader';
 import { cn } from '@/lib/utils';
 import EndCallButton from './EndCallButton';
 import MeetingChat from './chat/MeetingChat';
+import { useTranscript } from '@/hooks/useTranscript';
+import { generateMeetingSummary } from '@/actions/summary.actions';
 
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
@@ -38,10 +40,27 @@ const MeetingRoom = () => {
   const [showParticipants, setShowParticipants] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   const call = useCall();
   const meetingId = call?.id;
   const { useCallCallingState } = useCallStateHooks();
+  const { getFormattedTranscript } = useTranscript();
+
+  const handleGenerateSummary = async () => {
+    if (!meetingId) return;
+    try {
+      setIsGeneratingSummary(true);
+      const transcript = getFormattedTranscript();
+      await generateMeetingSummary(meetingId, transcript);
+      router.push(`/meeting/${meetingId}/summary?fromMeeting=true`);
+    } catch (err: any) {
+      console.error('Failed to generate summary:', err);
+      alert(err.message || 'Failed to generate meeting summary.');
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
 
   const callingState = useCallCallingState();
 
@@ -162,6 +181,17 @@ const MeetingRoom = () => {
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={handleGenerateSummary}
+            disabled={isGeneratingSummary}
+            title="AI Meeting Summary"
+          >
+            <div className="cursor-pointer rounded-2xl bg-gradient-to-r from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 px-4 py-2 hover:bg-indigo-500/30 transition-colors duration-200 flex items-center gap-1.5 text-indigo-300 font-medium text-xs sm:text-sm">
+              <Sparkles size={18} className={cn("text-indigo-400", { "animate-spin": isGeneratingSummary })} />
+              <span>{isGeneratingSummary ? "Generating..." : "AI Summary"}</span>
+            </div>
           </button>
 
           {!isPersonalRoom && <EndCallButton />}

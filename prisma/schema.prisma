@@ -28,3 +28,16 @@ model User {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
+
+model MeetingSummary {
+  id          String   @id @default(uuid())
+  meetingId   String   @unique
+  summary     String   @db.Text
+  keyPoints   String[]
+  decisions   String[]
+  actionItems Json
+  transcript  String   @db.Text
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
